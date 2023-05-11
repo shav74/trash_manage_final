@@ -1,0 +1,37 @@
+$insertValuesSQL = '';
+$reportId = 123; // Replace with the actual report ID value
+
+// Loop through the uploaded files
+foreach($_FILES['files']['name'] as $key => $val) {
+    // File upload path 
+    $fileName = basename($_FILES['files']['name'][$key]); 
+    $targetFilePath = $targetDir . $fileName; 
+
+    // Check whether file type is valid 
+    $fileType = pathinfo($targetFilePath, PATHINFO_EXTENSION); 
+    if(in_array($fileType, $allowTypes)) { 
+        // Upload file to server 
+        if(move_uploaded_file($_FILES["files"]["tmp_name"][$key], $targetFilePath)) { 
+            // Add values to the SQL query
+            $insertValuesSQL .= "('".$fileName."', NOW(), '".$reportId."'),"; 
+        } else { 
+            $errorUpload .= $_FILES['files']['name'][$key].' | '; 
+        } 
+    } else { 
+        $errorUploadType .= $_FILES['files']['name'][$key].' | '; 
+    } 
+} 
+
+// Check if any files were uploaded successfully
+if(!empty($insertValuesSQL)) {
+    $insertValuesSQL = trim($insertValuesSQL, ','); 
+    // Insert image file name and report ID into database 
+    $insert = $connection->query("INSERT INTO images (file_name, uploaded_on, report_id) VALUES $insertValuesSQL"); 
+    if($insert){ 
+        $statusMsg = "Files are uploaded successfully.".$errorMsg; 
+    } else { 
+        $statusMsg = "Sorry, there was an error uploading your file."; 
+    } 
+} else { 
+    $statusMsg = "Upload failed! ".$errorMsg; 
+}
